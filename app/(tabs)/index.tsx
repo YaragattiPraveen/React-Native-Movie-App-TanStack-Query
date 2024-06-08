@@ -1,64 +1,30 @@
 import { ActivityIndicator, FlatList, StyleSheet } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import { useEffect, useState } from 'react';
 import getDataTopRatedMovies from '@/api/movies';
-
-
-type Movie = {
-  adult: boolean;
-  backdrop_path: string;
-  genre_ids: number[];
-  id: number;
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  poster_path: string;
-  release_date: string;
-  title: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
-};
-
+import { useQuery } from '@tanstack/react-query';
+import MovieListItem from '@/components/MovieListItem';
 
 export default function TabOneScreen() {
-  const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isError, setIsError] = useState<string>("")
-
-  const getTopMoviesData = async () => {
-    setIsLoading(true)
-    try {
-      const movies = await getDataTopRatedMovies()
-      setTopRatedMovies(movies)
-    } catch (error:any) {
-      setIsError(error)
-    }
-    setIsLoading(false)
-  }
-
-  useEffect(() => {
-    getTopMoviesData()
-  }, [])
+  const { data: topRatedMovies, isLoading, error } = useQuery({
+    queryKey: ["movies"],
+    queryFn: getDataTopRatedMovies
+  })
 
   if (isLoading) {
     return <ActivityIndicator />
   }
 
-  if(isError) {
-    return <Text>{isError?.message}</Text>
+  if (error) {
+    return <Text>{error?.message}</Text>
   }
 
-  console.log(topRatedMovies)
   return (
     <View style={styles.container}>
-      <FlatList data={topRatedMovies} renderItem={({ item }) => {
-        return <View>
-          <Text>{item?.title}</Text>
-          <Text>{item?.original_title}</Text>
-        </View>
-      }} />
+      <FlatList
+        contentContainerStyle={{ gap: 6, padding: 5 }}
+        columnWrapperStyle={{gap:6}}
+        numColumns={2}
+        data={topRatedMovies} renderItem={({ item }) => <MovieListItem movie{...item} />} />
     </View>
   );
 }
@@ -66,7 +32,5 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   }
 });
